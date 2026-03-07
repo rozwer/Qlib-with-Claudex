@@ -1,0 +1,17 @@
+# Subprojects (managed separately)
+Qlib-with-Claudex/
+RD-Agent-with-Claudex/
+
+# Claude Code state
+.claude/state/
+.claude/sessions/
+.claude/logs/
+.claude/memory/
+
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
