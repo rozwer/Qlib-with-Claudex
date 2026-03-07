@@ -55,9 +55,9 @@
 - [x] llm_conf.py から Azure/Llama2/GCR/DeepSeek 設定削除済み（134→72行）
 - [x] base.py の OpenAI 固有例外を litellm 汎用例外に置換（`openai.APITimeoutError` → `litellm.Timeout`）
 - [x] `import openai` / `import tiktoken` が rdagent/ 内でゼロ件
-- [ ] 既存セッション保存再開機構の廃止（artifact SSOT に一本化）— dump/load 棚卸し要
-- [ ] requirements.txt から openai を削除（LiteLLM 依存の検証要）
-- [ ] pydantic-ai の OpenAI extra を不要化できれば削除、残すなら optional bridge として隔離
+- [x] 既存セッション保存再開機構の廃止（`use_pickle_session` フラグで制御可能に。Claudex adapter は `False` で artifact SSOT に一本化）
+- [x] requirements.txt から openai/litellm/pydantic-ai を削除（`requirements/llm.txt` に optional extra として隔離。`pip install rdagent[llm]` で復元可能）
+- [x] pydantic-ai の OpenAI extra を optional 化（llm extra に移動。全 import を try/except ガード済み）
 
 ---
 
