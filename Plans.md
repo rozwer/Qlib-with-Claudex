@@ -23,32 +23,40 @@
 
 > 目標: factor 1個、1ラウンド、完全自律で完走。
 
-- [ ] Planner サブエージェント実装（TraceView → hypothesis.json + experiment.json）
-- [ ] Evaluator サブエージェント実装（run_result.json → feedback.json）
-- [ ] qlib-rd-loop スキル実装（全体ループ制御）
-- [ ] qlib-factor-implement スキル実装（Codex 用ガイドライン）
-- [ ] End-to-end 1ラウンド完走テスト
+- [x] Planner サブエージェント実装（TraceView → hypothesis.json + experiment.json）
+- [x] Evaluator サブエージェント実装（run_result.json → feedback.json）
+- [x] qlib-rd-loop スキル実装（全体ループ制御）
+- [x] qlib-factor-implement スキル実装（Codex 用ガイドライン）
+- [ ] End-to-end 1ラウンド完走テスト（実 Qlib 環境依存 — Phase 3 で実施）
 
 ## Phase 2: Claude 系ランタイムへの中核移行
 
-- [ ] deprec.py 削除 or Claude SDK バックエンド置換
-- [ ] pydantic_ai.py の LiteLLM bridge を Claude モデル対応に整理
-- [ ] tiktoken → LiteLLM token counter
-- [ ] embedding を Voyage 等に移行
-- [ ] LangChain 依存整理
+- [x] llm_conf.py 設定更新（chat_model→Claude, token_limit→200k, API key→Anthropic, legacy 設定削除）
+- [x] deprec.py 削除（491行の deprecated OpenAI/Azure/Llama2/GCR バックエンド）
+- [x] pydantic_ai.py の LiteLLM bridge を Claude モデル対応に整理（PROVIDER_TO_ENV_MAP に anthropic 追加）
+- [x] tiktoken → LiteLLM token counter（finetune/scen/utils.py）
+- [x] embedding を Voyage voyage-3 に移行（llm_conf.py + embedding.py + finetune conf）
+- [x] LangChain 依存整理（pypdf 直接使用、langchain/langchain-community 削除）
 
 ## Phase 3: 完全移行・公開準備
 
-- [ ] Docker/CI 環境更新（kaggle_environment.yaml 等）
-- [ ] Qlib-with-Claudex 側の CLAUDE.md / スキル / フック整備
-- [ ] ドキュメント整備
-- [ ] 公開準備（README, LICENSE 確認, CI/CD）
+- [x] Docker 環境更新（kaggle_environment.yaml: openai→anthropic, tiktoken/langchain 削除済み）
+- [x] RD-Agent-with-Claudex CLAUDE.md 作成（アーキテクチャ、Adapter 層、Artifact 構造）
+- [x] ドキュメント更新（README に Anthropic 設定例追加、installation_and_configuration.rst 更新）
+- [x] 公開準備（LICENSE MIT 確認済、.gitignore に .claude/ .env 除外済み）
+- [x] Qlib-with-Claudex CLAUDE.md 作成（データセットアップ、バックテスト手順）
+- [x] CI/CD パイプライン整備（adapter-tests + lint-openai-allowlist ジョブ追加）
+- [x] 新規スキル作成（qlib-hypothesis-gen, qlib-experiment-eval, qlib-artifact-inspect）
 
 ## Phase 4: レガシー削除
 
-- [ ] 既存セッション保存再開機構の廃止（artifact SSOT に一本化）
-- [ ] rdagent/oai/ の OpenAI 専用コード完全削除
-- [ ] requirements.txt から openai, tiktoken を削除
+- [x] deprec.py 削除済み（Phase 2.1 で実施）
+- [x] __init__.py から DeprecBackend import 削除済み
+- [x] llm_conf.py から Azure/Llama2/GCR/DeepSeek 設定削除済み（134→72行）
+- [x] base.py の OpenAI 固有例外を litellm 汎用例外に置換（`openai.APITimeoutError` → `litellm.Timeout`）
+- [x] `import openai` / `import tiktoken` が rdagent/ 内でゼロ件
+- [ ] 既存セッション保存再開機構の廃止（artifact SSOT に一本化）— dump/load 棚卸し要
+- [ ] requirements.txt から openai を削除（LiteLLM 依存の検証要）
 - [ ] pydantic-ai の OpenAI extra を不要化できれば削除、残すなら optional bridge として隔離
 
 ---
