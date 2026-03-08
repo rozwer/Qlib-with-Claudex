@@ -34,11 +34,23 @@ git clone git@github.com:rozwer/RD-Agent-with-Claudex.git RD-Agent-with-Claudex
 
 # 3. Set up RD-Agent virtual environment
 cd RD-Agent-with-Claudex
-uv venv && source .venv/bin/activate
+uv venv --python 3.12 && source .venv/bin/activate
 uv pip install -e ".[dev]"
 
-# 4. Download Qlib data
-python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/cn_data --region cn
+# 4. Install Qlib into the venv
+uv pip install -e ../Qlib-with-Claudex/
+
+# 5. Download Qlib market data (~50MB, CSI300 2005-2021)
+cd ../Qlib-with-Claudex/scripts
+python get_data.py qlib_data --name qlib_data_simple \
+  --target_dir ~/.qlib/qlib_data/cn_data --region cn
+cd ../..
+
+# 6. Generate source_data.h5 (quick test)
+python scripts/prepare_source_data.py --output /tmp/source_data.h5
+
+# 7. Verify data quality
+python scripts/check_data_quality.py /tmp/source_data.h5 /tmp/data_quality.json
 ```
 
 ## Scripts
@@ -50,12 +62,13 @@ python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/cn_data --r
 | `scripts/check_data_quality.py` | Inspect column missing rates, output data_quality.json |
 
 ```bash
-# Generate source_data.h5 for 5 rounds (50 instruments, 2019-2020)
-cd RD-Agent-with-Claudex && source .venv/bin/activate && cd ..
+# Generate source_data.h5 for a full R&D loop (5 rounds, 50 instruments, 2019-2020)
+source RD-Agent-with-Claudex/.venv/bin/activate
 python scripts/prepare_source_data.py --output_dir .claude/artifacts/rdloop/my_run --rounds 5
 
-# Quick test (single file)
-python scripts/prepare_source_data.py --output /tmp/source_data.h5
+# Customize: 100 instruments, longer period
+python scripts/prepare_source_data.py --output_dir .claude/artifacts/rdloop/my_run \
+  --rounds 10 --n_instruments 100 --start_time 2015-01-01 --end_time 2020-12-31
 ```
 
 ## R&D Loop
