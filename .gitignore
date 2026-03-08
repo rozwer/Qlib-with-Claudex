@@ -10,8 +10,6 @@ RD-Agent-with-Claudex/
 .claude/settings.local.json
 .claude/agent-memory/
 .claude/artifacts/
-.claude/hooks.json
-.claude/hooks/
 
 # Documents (local design docs, not distributed)
 docs/

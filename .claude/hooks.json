@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "pre-tool": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat | bash /Users/roz/Desktop/Qlib/.claude/hooks/guard-pkg-manager.sh"
+          },
+          {
+            "type": "command",
+            "command": "cat | bash /Users/roz/Desktop/Qlib/.claude/hooks/guard-macos-multiprocessing.sh"
+          },
+          {
+            "type": "command",
+            "command": "cat | bash /Users/roz/Desktop/Qlib/.claude/hooks/guard-venv-activation.sh"
+          },
+          {
+            "type": "command",
+            "command": "cat | bash /Users/roz/Desktop/Qlib/.claude/hooks/guard-source-data.sh"
+          }
+        ]
+      }
+    ],
+    "post-tool": []
+  }
+}
