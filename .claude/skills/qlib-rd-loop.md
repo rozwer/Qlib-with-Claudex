@@ -46,33 +46,11 @@ python -c "import qlib; print(qlib.__version__)"
 
 ### Creating source_data.h5
 
-**Important**: On macOS, `multiprocessing.set_start_method("fork", force=True)` is required.
-Run as a script file (stdin is not supported; this avoids multiprocessing spawn errors).
-
-```python
-# Save as /tmp/prepare_source_data.py and execute
-import multiprocessing
-multiprocessing.set_start_method("fork", force=True)
-import qlib, pandas as pd
-
-qlib.init(provider_uri="~/.qlib/qlib_data/cn_data", region="cn")
-from qlib.data import D
-
-instruments = D.instruments("csi300")
-stock_list = D.list_instruments(instruments, start_time="2019-01-01", end_time="2020-12-31")
-symbols = sorted(stock_list.keys())[:50]  # 50 stocks for testing
-
-df = D.features(
-    symbols,
-    ["$open", "$close", "$high", "$low", "$volume", "$vwap"],
-    start_time="2019-01-01", end_time="2020-12-31"
-)
-df.columns = ["open", "close", "high", "low", "volume", "vwap"]
-
-# Place in each round's workspace
-for r in range(N_ROUNDS):
-    df.to_hdf(f"{ARTIFACT_DIR}/round_{r}/implementations/source_data.h5", key="data")
+```bash
+python scripts/prepare_source_data.py --output_dir <artifact_dir> --rounds <N_ROUNDS>
 ```
+
+See `scripts/prepare_source_data.py` for options (instruments count, date range, etc.).
 
 **Note**: The Simple data covers 2005 through June 2021. Dates after 2022 will return empty results.
 
@@ -100,28 +78,10 @@ Also register the same tasks with the TodoWrite tool to track progress.
 Validate the missing rate of each column in source_data.h5 and save to `artifact_dir/data_quality.json`.
 This information is passed to the Planner across all rounds.
 
-```python
-# Run as /tmp/check_data_quality.py
-import multiprocessing
-multiprocessing.set_start_method("fork", force=True)
-import pandas as pd, json
-
-df = pd.read_hdf(f"{ARTIFACT_DIR}/round_0/implementations/source_data.h5", key="data")
-quality = {
-    "total_rows": len(df),
-    "columns": {}
-}
-for col in df.columns:
-    notna = int(df[col].notna().sum())
-    quality["columns"][col] = {
-        "notna": notna,
-        "missing_pct": round((1 - notna / len(df)) * 100, 1),
-        "usable": notna > len(df) * 0.5  # Usable if more than 50% present
-    }
-quality["usable_columns"] = [c for c, v in quality["columns"].items() if v["usable"]]
-
-with open(f"{ARTIFACT_DIR}/data_quality.json", "w") as f:
-    json.dump(quality, f, indent=2)
+```bash
+python scripts/check_data_quality.py \
+  <artifact_dir>/round_0/implementations/source_data.h5 \
+  <artifact_dir>/data_quality.json
 ```
 
 **Example output**:
@@ -180,62 +140,8 @@ cd <artifact_dir>/round_<i>/implementations && python factor.py
 
 After running factor.py, compute IC/IR/RankIC from result.h5 to generate run_result.json:
 
-```python
-# Save as /tmp/calc_ic.py and execute (stdin not supported)
-# Args: workspace artifact_dir round_idx factor_name
-import multiprocessing
-multiprocessing.set_start_method("fork", force=True)
-import pandas as pd, numpy as np, json, sys
-
-workspace, artifact_dir = sys.argv[1], sys.argv[2]
-round_idx, factor_name = int(sys.argv[3]), sys.argv[4]
-
-result = pd.read_hdf(f"{workspace}/result.h5")
-source = pd.read_hdf(f"{workspace}/source_data.h5")
-
-# Index-order independent: reset_index + merge approach
-result_df = result.reset_index()
-source_df = source.reset_index()
-
-factor_col = [c for c in result_df.columns if c not in ("instrument", "datetime")][0]
-result_df = result_df.rename(columns={factor_col: "factor"})
-
-source_df = source_df.sort_values(["instrument", "datetime"])
-source_df["forward_return"] = source_df.groupby("instrument")["close"].transform(
-    lambda s: s.pct_change().shift(-1)
-)
-
-merged = pd.merge(result_df[["instrument", "datetime", "factor"]],
-                   source_df[["instrument", "datetime", "forward_return"]],
-                   on=["instrument", "datetime"])
-merged = merged.dropna(subset=["factor", "forward_return"])
-
-# Daily IC / Rank IC (use loop to avoid groupby.apply return type issues)
-ic_list, rank_ic_list = [], []
-for dt, grp in merged.groupby("datetime"):
-    if len(grp) < 5:
-        continue
-    ic_list.append(grp["factor"].corr(grp["forward_return"]))
-    rank_ic_list.append(grp["factor"].rank().corr(grp["forward_return"].rank()))
-
-daily_ic = pd.Series(ic_list).dropna()
-daily_rank_ic = pd.Series(rank_ic_list).dropna()
-
-run_result = {
-    "status": "success",
-    "factor_name": factor_name,
-    "metrics": {
-        "ic_mean": round(float(daily_ic.mean()), 6),
-        "ic_std": round(float(daily_ic.std()), 6),
-        "ir": round(float(daily_ic.mean() / daily_ic.std()), 6),
-        "rank_ic_mean": round(float(daily_rank_ic.mean()), 6),
-        "daily_ic_positive_ratio": round(float((daily_ic > 0).mean()), 4),
-        "n_observations": int(merged.shape[0]),
-        "n_days": int(len(daily_ic))
-    }
-}
-with open(f"{artifact_dir}/round_{round_idx}/run_result.json", "w") as f:
-    json.dump(run_result, f, indent=2)
+```bash
+python scripts/calc_ic.py <workspace> <artifact_dir> <round_idx> <factor_name>
 ```
 
 Save results to `round_<i>/run_result.json`.

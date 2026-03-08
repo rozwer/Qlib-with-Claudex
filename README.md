@@ -41,6 +41,23 @@ uv pip install -e ".[dev]"
 python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/cn_data --region cn
 ```
 
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/prepare_source_data.py` | Generate source_data.h5 from Qlib market data |
+| `scripts/calc_ic.py` | Calculate IC/IR/RankIC from backtest results |
+| `scripts/check_data_quality.py` | Inspect column missing rates, output data_quality.json |
+
+```bash
+# Generate source_data.h5 for 5 rounds (50 instruments, 2019-2020)
+cd RD-Agent-with-Claudex && source .venv/bin/activate && cd ..
+python scripts/prepare_source_data.py --output_dir .claude/artifacts/rdloop/my_run --rounds 5
+
+# Quick test (single file)
+python scripts/prepare_source_data.py --output /tmp/source_data.h5
+```
+
 ## R&D Loop
 
 Claude Code sequentially invokes the following subagents to automate factor discovery:
