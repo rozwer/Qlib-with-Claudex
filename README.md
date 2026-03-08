@@ -24,13 +24,12 @@ Qlib/                          ← This repository (parent)
 ## Setup
 
 ```bash
-# 1. Clone the parent repository
-git clone git@github.com:rozwer/Qlib-with-Claudex.git Qlib
+# 1. Clone with submodules (single command)
+git clone --recurse-submodules git@github.com:rozwer/Qlib-with-Claudex.git Qlib
 cd Qlib
 
-# 2. Clone child repositories
-git clone git@github.com:rozwer/qlib-with-claudex-sub.git Qlib-with-Claudex
-git clone git@github.com:rozwer/RD-Agent-with-Claudex.git RD-Agent-with-Claudex
+# If you already cloned without --recurse-submodules:
+# git submodule update --init --recursive
 
 # 3. Set up RD-Agent virtual environment
 cd RD-Agent-with-Claudex

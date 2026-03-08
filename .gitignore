@@ -1,6 +1,4 @@
-# Subprojects (managed separately)
-Qlib-with-Claudex/
-RD-Agent-with-Claudex/
+# Subprojects are now git submodules (tracked by .gitmodules)
 
 # Claude Code state (personal / runtime)
 .claude/state/
