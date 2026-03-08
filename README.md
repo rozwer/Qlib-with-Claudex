@@ -83,6 +83,33 @@ Claude Code sequentially invokes the following subagents to automate factor disc
 | Execution | Bash (RD-Agent venv) | Run factor.py + calculate IC |
 | Evaluation | Evaluator (Agent tool) | Analyze results → provide feedback |
 
+## About Qlib
+
+This project is built on top of [Microsoft Qlib](https://github.com/microsoft/qlib), an AI-oriented quantitative investment platform.
+
+Qlib provides the full ML pipeline for quantitative investment: data processing, model training, backtesting, and covers the entire chain from alpha seeking to order execution. It supports diverse ML paradigms including supervised learning, market dynamics modeling, and reinforcement learning.
+
+### Key Features (from upstream Qlib)
+
+- **[Quant Model Zoo](Qlib-with-Claudex/examples/benchmarks/)** — 20+ SOTA models (LightGBM, LSTM, Transformer, TRA, HIST, etc.)
+- **[Dataset Zoo](Qlib-with-Claudex/qlib/contrib/data/handler.py)** — Alpha158, Alpha360 for US and China markets
+- **[Auto Workflow](https://qlib.readthedocs.io/en/latest/component/workflow.html)** — `qrun` for end-to-end research workflow
+- **[RL Framework](https://qlib.readthedocs.io/en/latest/component/rl.html)** — Reinforcement learning for order execution
+- **[Online Serving](https://qlib.readthedocs.io/en/latest/component/online.html)** — Deploy models with automatic rolling
+
+### Qlib Documentation
+
+- [Official Docs](https://qlib.readthedocs.io/)
+- [Tutorials (Notebooks)](Qlib-with-Claudex/examples/tutorial/)
+- [Original README](Qlib-with-Claudex/README.md)
+
+### About RD-Agent
+
+[Microsoft RD-Agent](https://github.com/microsoft/RD-Agent) is an LLM-based autonomous agent framework for industrial data-driven R&D. This project replaces its OpenAI backend with Claude Code subagents.
+
+- [RD-Agent Paper](https://arxiv.org/abs/2505.15155)
+- [Original README](RD-Agent-with-Claudex/README.md)
+
 ## License
 
 MIT (inherited from Microsoft Qlib / RD-Agent)
