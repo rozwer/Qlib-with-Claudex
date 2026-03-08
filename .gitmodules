@@ -1,6 +1,6 @@
 [submodule "Qlib-with-Claudex"]
 	path = Qlib-with-Claudex
-	url = git@github.com:rozwer/qlib-with-claudex-sub.git
+	url = https://github.com/rozwer/qlib-with-claudex-sub.git
 [submodule "RD-Agent-with-Claudex"]
 	path = RD-Agent-with-Claudex
-	url = git@github.com:rozwer/RD-Agent-with-Claudex.git
+	url = https://github.com/rozwer/RD-Agent-with-Claudex.git
