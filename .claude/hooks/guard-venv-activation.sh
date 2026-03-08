@@ -33,7 +33,7 @@ if echo "$CMD" | grep -qE 'py_compile'; then
 fi
 
 if [[ "$needs_venv" == "true" ]]; then
-  echo '{"decision":"block","reason":"RD-Agent の venv が有効化されていません。\n以下のように venv を有効化してから実行してください:\n  cd RD-Agent-with-Claudex && source .venv/bin/activate && python ...\n\nまたは:\n  source /Users/roz/Desktop/Qlib/RD-Agent-with-Claudex/.venv/bin/activate && python ..."}'
+  echo '{"decision":"block","reason":"RD-Agent の venv が有効化されていません。\n以下のように venv を有効化してから実行してください:\n  cd RD-Agent-with-Claudex && source .venv/bin/activate && python ..."}'
   exit 0
 fi
 

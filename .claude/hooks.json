@@ -6,19 +6,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cat | bash /Users/roz/Desktop/Qlib/.claude/hooks/guard-pkg-manager.sh"
+            "command": "cat | bash \"$(git rev-parse --show-toplevel)/.claude/hooks/guard-pkg-manager.sh\""
           },
           {
             "type": "command",
-            "command": "cat | bash /Users/roz/Desktop/Qlib/.claude/hooks/guard-macos-multiprocessing.sh"
+            "command": "cat | bash \"$(git rev-parse --show-toplevel)/.claude/hooks/guard-macos-multiprocessing.sh\""
           },
           {
             "type": "command",
-            "command": "cat | bash /Users/roz/Desktop/Qlib/.claude/hooks/guard-venv-activation.sh"
+            "command": "cat | bash \"$(git rev-parse --show-toplevel)/.claude/hooks/guard-venv-activation.sh\""
           },
           {
             "type": "command",
-            "command": "cat | bash /Users/roz/Desktop/Qlib/.claude/hooks/guard-source-data.sh"
+            "command": "cat | bash \"$(git rev-parse --show-toplevel)/.claude/hooks/guard-source-data.sh\""
           }
         ]
       }
