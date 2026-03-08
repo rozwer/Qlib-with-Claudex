@@ -1,70 +1,94 @@
-# Plans — Qlib-with-Claudex Migration
+# Qlib-with-Claudex — Project Plans
 
-この計画は親 repo 配下の 2 subrepo をまたいで進める。
-- `RD-Agent-with-Claudex/`: Phase 1A-4 の主実装対象
-- `Qlib-with-Claudex/`: 主に Phase 3 の公開準備対象
-- `docs/plans/`: 親 repo 側の設計・進捗管理
+## 全体ゴール
 
-## Phase 1A: Adapter 検証（deterministic stub）
-
-> 目標: Adapter 層が正しく動くことを検証。実 Qlib/Docker は使わない。
-
-- [x] Artifact ディレクトリ構造の実装（`.claude/artifacts/rdloop/<run_id>/round_<N>/`）
-- [x] ClaudeCodeAPIBackend compatibility shim 実装（chat/token/embedding 三分割）
-- [x] ClaudeCodeFactorHypothesisGenAdapter 実装
-- [x] ClaudeCodeFactorH2EAdapter 実装
-- [x] ClaudeCodeFactorCoderAdapter 実装
-- [x] ClaudeCodeFactorSummarizerAdapter 実装
-- [x] Stub ベースの 2-round 検証テスト
-- [x] Resume テスト（4 checkpoint 地点から再開）
-- [x] Compatibility shim テスト（import / chat / token / embedding fail-fast）
-
-## Phase 1B: Planner + Evaluator 自動化
-
-> 目標: factor 1個、1ラウンド、完全自律で完走。
-
-- [x] Planner サブエージェント実装（TraceView → hypothesis.json + experiment.json）
-- [x] Evaluator サブエージェント実装（run_result.json → feedback.json）
-- [x] qlib-rd-loop スキル実装（全体ループ制御）
-- [x] qlib-factor-implement スキル実装（Codex 用ガイドライン）
-- [ ] End-to-end 1ラウンド完走テスト（実 Qlib 環境依存 — Phase 3 で実施）
-
-## Phase 2: Claude 系ランタイムへの中核移行
-
-- [x] llm_conf.py 設定更新（chat_model→Claude, token_limit→200k, API key→Anthropic, legacy 設定削除）
-- [x] deprec.py 削除（491行の deprecated OpenAI/Azure/Llama2/GCR バックエンド）
-- [x] pydantic_ai.py の LiteLLM bridge を Claude モデル対応に整理（PROVIDER_TO_ENV_MAP に anthropic 追加）
-- [x] tiktoken → LiteLLM token counter（finetune/scen/utils.py）
-- [x] embedding を Voyage voyage-3 に移行（llm_conf.py + embedding.py + finetune conf）
-- [x] LangChain 依存整理（pypdf 直接使用、langchain/langchain-community 削除）
-
-## Phase 3: 完全移行・公開準備
-
-- [x] Docker 環境更新（kaggle_environment.yaml: openai→anthropic, tiktoken/langchain 削除済み）
-- [x] RD-Agent-with-Claudex CLAUDE.md 作成（アーキテクチャ、Adapter 層、Artifact 構造）
-- [x] ドキュメント更新（README に Anthropic 設定例追加、installation_and_configuration.rst 更新）
-- [x] 公開準備（LICENSE MIT 確認済、.gitignore に .claude/ .env 除外済み）
-- [x] Qlib-with-Claudex CLAUDE.md 作成（データセットアップ、バックテスト手順）
-- [x] CI/CD パイプライン整備（adapter-tests + lint-openai-allowlist ジョブ追加）
-- [x] 新規スキル作成（qlib-hypothesis-gen, qlib-experiment-eval, qlib-artifact-inspect）
-
-## Phase 4: レガシー削除
-
-- [x] deprec.py 削除済み（Phase 2.1 で実施）
-- [x] __init__.py から DeprecBackend import 削除済み
-- [x] llm_conf.py から Azure/Llama2/GCR/DeepSeek 設定削除済み（134→72行）
-- [x] base.py の OpenAI 固有例外を litellm 汎用例外に置換（`openai.APITimeoutError` → `litellm.Timeout`）
-- [x] `import openai` / `import tiktoken` が rdagent/ 内でゼロ件
-- [x] 既存セッション保存再開機構の廃止（`use_pickle_session` フラグで制御可能に。Claudex adapter は `False` で artifact SSOT に一本化）
-- [x] requirements.txt から openai/litellm/pydantic-ai を削除（`requirements/llm.txt` に optional extra として隔離。`pip install rdagent[llm]` で復元可能）
-- [x] pydantic-ai の OpenAI extra を optional 化（llm extra に移動。全 import を try/except ガード済み）
+Microsoft Qlib + RD-Agent の OpenAI 依存を Claude Code + Codex に完全置換し、
+自律的なファクター R&D ループを実現する。
 
 ---
 
-## Phase Files
+## Phase 1: 基盤構築 ✅ COMPLETE
 
-- [phase-1A.md](docs/plans/phase-1A.md)
-- [phase-1B.md](docs/plans/phase-1B.md)
-- [phase-2.md](docs/plans/phase-2.md)
-- [phase-3.md](docs/plans/phase-3.md)
-- [phase-4.md](docs/plans/phase-4.md)
+OpenAI → Claude/LiteLLM 置換、Adapter 層構築、テスト整備。
+
+- [x] **1A** Adapter 層実装（5 slot）+ 38 unit tests
+- [x] **1B** Skills / Subagents 定義（6 skills, 3 subagents）
+- [x] **1B** Codex CLI 統合（`codex exec --full-auto`）
+
+## Phase 2: LLM バックエンド整理 ✅ COMPLETE
+
+- [x] Claude をデフォルトバックエンドに設定
+- [x] tiktoken / langchain 依存削除
+- [x] deprec.py 削除
+- [x] llm_conf.py 簡素化（134→72 行）
+
+## Phase 3: インフラ・ドキュメント ✅ COMPLETE
+
+- [x] Docker 対応
+- [x] CLAUDE.md × 2（親リポ + 子リポ）
+- [x] CI 設定
+- [x] 5 skill 定義文書
+
+## Phase 4: クリーンアップ 🔶 PARTIAL
+
+- [x] base.py 修正
+- [ ] **4-1** dump/load 削除（15+ files across 5 scenarios）
+- [ ] **4-2** openai パッケージ直接参照の除去（litellm 依存は残す）
+
+## Phase 5: R&D ループ実戦検証 🔶 IN PROGRESS
+
+5 ラウンド実行済み。IC 閾値（0.03）未達だが、ワークフロー自体は動作確認済み。
+
+- [x] **5-1** 環境構築（Qlib データ + venv + source_data.h5）
+- [x] **5-2** 5 ラウンド実行（CSI300 Simple Data, 50 銘柄）
+- [x] **5-3** データ品質検証システム追加（data_quality.json）
+- [x] **5-4** IC 計算スクリプトの堅牢化（reset_index + merge + loop）
+- [x] **5-5** 教訓のスキル・サブエージェント反映
+  - groupby.transform() 強制
+  - NaN カラム事前チェック
+  - vwap フォールバック（typical price）
+- [x] **5-6** Plan テンプレート導入（`.claude/templates/rdloop-plan.md`）
+- [ ] **5-7** IC > 0.03 達成ファクターの探索（次回実行）
+- [ ] **5-8** 全銘柄（714）での検証
+- [ ] **5-9** バックテスト期間拡大（2005-2021）
+
+## Phase 6: リポジトリ公開 ✅ COMPLETE
+
+- [x] **6-1** 親リポ作成・push（rozwer/Qlib-with-Claudex）
+- [x] **6-2** 子リポ作成・push（qlib-with-claudex-sub, RD-Agent-with-Claudex）
+- [x] **6-3** README 作成（親 + 子 × 2）
+- [x] **6-4** .gitignore 整備（runtime dirs, settings.local.json）
+- [x] **6-5** 共有パーミッション設定（settings.json）
+
+## Phase 7: FX 移行 📋 PLANNED
+
+為替（FX）データへの対応拡張。
+
+- [ ] **7-1** FX データソース選定・取得パイプライン
+- [ ] **7-2** FX 向け scenario adapter
+- [ ] **7-3** FX 固有ファクター仮説テンプレート
+- [ ] **7-4** 実戦検証
+
+> 詳細: `docs/plans/2026-03-08-fx-fork-design.md`
+
+---
+
+## 残課題サマリ
+
+| 優先度 | タスク | Phase |
+|--------|--------|-------|
+| High | IC > 0.03 ファクター探索 | 5-7 |
+| High | dump/load 削除 | 4-1 |
+| Medium | 全銘柄検証 | 5-8 |
+| Medium | openai 直接参照除去 | 4-2 |
+| Low | FX 移行 | 7 |
+
+## R&D ループ実行結果（参考）
+
+| Round | Factor | IC | Decision |
+|-------|--------|------|----------|
+| 0 | volume_price_divergence_20d | 0.011 | rejected |
+| 1 | volume_surprise_reversal_5d | 0.002 | rejected |
+| 2 | volatility_contraction_ratio_5d20d | 0.001 | rejected |
+| 3 | vwap_deviation_dual_momentum_10d40d | -0.014 | rejected |
+| 4 | asymmetric_volume_gk_normalized_20d | 0.006 | rejected |
