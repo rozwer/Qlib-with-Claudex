@@ -25,12 +25,12 @@ Qlib/                          ← このリポジトリ（親）
 
 ```bash
 # 1. 親リポジトリをクローン
-git clone <this-repo-url> Qlib
+git clone git@github.com:rozwer/Qlib-with-Claudex.git Qlib
 cd Qlib
 
 # 2. 子リポジトリをクローン
-git clone <qlib-fork-url> Qlib-with-Claudex
-git clone <rdagent-fork-url> RD-Agent-with-Claudex
+git clone git@github.com:rozwer/qlib-with-claudex-sub.git Qlib-with-Claudex
+git clone git@github.com:rozwer/RD-Agent-with-Claudex.git RD-Agent-with-Claudex
 
 # 3. RD-Agent 仮想環境セットアップ
 cd RD-Agent-with-Claudex
