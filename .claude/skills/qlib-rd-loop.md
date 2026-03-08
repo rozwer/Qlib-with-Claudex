@@ -149,7 +149,9 @@ Input: TraceView, Scenario, usable_columns from data_quality.json
 Output: round_<i>/hypothesis.json, round_<i>/experiment.json
 ```
 
-#### c. Implement — Codex CLI
+#### c. Implement — Codex CLI or Subagent Fallback
+
+**Primary (Codex CLI available):**
 ```bash
 codex exec --full-auto -C <workspace_path> \
   "Generate <workspace_path>/factor.py based on the following factor specification.
@@ -157,6 +159,16 @@ codex exec --full-auto -C <workspace_path> \
    Rules: source_data.h5 -> result.h5, MultiIndex support, no look-ahead bias"
 ```
 **Note**: Codex uses its own Python environment. Run factor.py in the RD-Agent venv.
+
+**Fallback (Codex CLI not available):**
+```
+Delegate to Agent tool (see .claude/subagents/coder.md, Subagent Fallback section)
+Input: experiment.json contents, workspace path
+Output: round_<i>/implementations/factor.py
+The agent writes factor.py directly using the Write tool.
+```
+
+Detection: run `which codex` at initialization (Phase 0). Set `codex_available=true/false`.
 
 #### d. Run Backtest — Direct Bash Execution
 ```bash

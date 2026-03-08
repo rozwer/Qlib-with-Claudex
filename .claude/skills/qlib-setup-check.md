@@ -57,13 +57,14 @@ print(f'pytables {tables.__version__}')
 
 **On failure**: `uv pip install tables`
 
-### 5. Codex CLI
+### 5. Codex CLI (optional — subagent fallback available)
 
 ```bash
 which codex && codex --version
 ```
 
-**On failure**: `bun install -g @anthropic-ai/codex` or `npm install -g @anthropic-ai/codex`
+**On failure**: Not critical. The R&D loop will use a Claude subagent for code generation instead.
+To install: `bun install -g @anthropic-ai/codex` or `npm install -g @anthropic-ai/codex`
 
 ### 6. Adapter Tests
 
@@ -84,7 +85,7 @@ Display results for each check in the following table:
 | 2 | Qlib | OK | 0.9.8.dev27 |
 | 3 | Qlib data | OK | 2005-01-04 to 2021-06-11 |
 | 4 | pytables | OK | 3.x.x |
-| 5 | Codex CLI | OK | 0.97.0 |
+| 5 | Codex CLI | OK / FALLBACK | 0.97.0 or "subagent mode" |
 | 6 | Adapter tests | OK | 38 passed, 1 skipped |
 ```
 

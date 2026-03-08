@@ -11,12 +11,13 @@
 | rounds | {{N_ROUNDS}} |
 | artifact_dir | {{ARTIFACT_DIR}} |
 | scenario | factor |
+| codex_available | {{CODEX_AVAILABLE}} |
 
 ## Phase 0: Environment Setup
 
 - [ ] **0-1** Verify Qlib data exists (`~/.qlib/qlib_data/cn_data`)
 - [ ] **0-2** Verify RD-Agent venv works (`python -c "import qlib"`)
-- [ ] **0-3** Verify Codex CLI works (`codex --version`)
+- [ ] **0-3** Check Codex CLI availability (`which codex`). If unavailable, set codex_available=false (subagent fallback)
 - [ ] **0-4** Create artifact_dir + `implementations/` directories for all rounds
 - [ ] **0-5** Generate source_data.h5 and place in all rounds' `implementations/`
 - [ ] **0-6** Initialize trace.json (new) or load (resume)
@@ -39,8 +40,8 @@
 - [ ] **2b-2** Verify hypothesis.json output (schema validation)
 - [ ] **2b-3** Verify experiment.json output (factor_name is a valid identifier)
 
-#### 2c. Code Generation -> Codex CLI
-- [ ] **2c-1** Run `codex exec --full-auto`
+#### 2c. Code Generation -> Codex CLI or Subagent Fallback
+- [ ] **2c-1** Generate factor.py (Codex CLI if available, otherwise Agent tool subagent)
 - [ ] **2c-2** Verify factor.py was generated
 - [ ] **2c-3** Syntax verification (`python -c "import py_compile; py_compile.compile('factor.py')"`)
 
