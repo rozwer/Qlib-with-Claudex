@@ -2,12 +2,16 @@
 Qlib-with-Claudex/
 RD-Agent-with-Claudex/
 
-# Claude Code state
+# Claude Code state (personal / runtime)
 .claude/state/
 .claude/sessions/
 .claude/logs/
 .claude/memory/
 .claude/settings.local.json
+.claude/agent-memory/
+.claude/artifacts/
+.claude/hooks.json
+.claude/hooks/
 
 # OS
 .DS_Store
