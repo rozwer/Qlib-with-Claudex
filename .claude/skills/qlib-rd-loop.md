@@ -78,6 +78,17 @@ for r in range(N_ROUNDS):
 
 ## フロー
 
+### 0. Plan テンプレート展開（最初に必ず実行）
+
+```bash
+# テンプレートをコピーして変数を置換
+cp .claude/templates/rdloop-plan.md <artifact_dir>/plan.md
+# {{RUN_ID}}, {{N_ROUNDS}}, {{ARTIFACT_DIR}} を実際の値に置換
+```
+
+**このplan.mdに基づいて実行を進め、各タスクの完了時にチェックを入れること。**
+TodoWrite ツールでも同じタスクを登録し、進捗を追跡する。
+
 ### 1. 初期化
 
 - `artifact_dir/trace.json` が存在？
