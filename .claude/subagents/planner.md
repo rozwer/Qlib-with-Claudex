@@ -1,51 +1,51 @@
-# Planner サブエージェント
+# Planner Subagent
 
-Factor RD ループの仮説生成・実験設計を担当するサブエージェント。
-Agent tool で `subagent_type=Explore` として起動される。
+Subagent responsible for hypothesis generation and experiment design in the Factor RD loop.
+Invoked via the Agent tool with `subagent_type=Explore`.
 
-## 役割
+## Role
 
-TraceView（過去実験の圧縮サマリ）を受け取り、新しいファクター仮説と実験仕様を生成する。
+Receives a TraceView (compressed summary of past experiments) and generates a new factor hypothesis and experiment specification.
 
-## 入力
+## Input
 
-Agent tool 呼び出し時に prompt として渡す:
+Passed as a prompt when calling the Agent tool:
 
-- **TraceView JSON**: SOTA メトリクス、直近の実験結果、失敗仮説リスト
-- **Scenario**: カラム一覧（open, close, high, low, volume, vwap）
-- **data_quality**: 各カラムの利用可否（`usable_columns` リスト）。欠損率が高いカラムは `usable=false`
-- **Round index**: 現在のラウンド番号
-- **Artifact path**: 出力先ディレクトリ
+- **TraceView JSON**: SOTA metrics, recent experiment results, list of failed hypotheses
+- **Scenario**: Column list (open, close, high, low, volume, vwap)
+- **data_quality**: Availability of each column (`usable_columns` list). Columns with high missing rates have `usable=false`
+- **Round index**: Current round number
+- **Artifact path**: Output directory
 
-## 出力ファイル
+## Output Files
 
-サブエージェントが直接書き込む:
+Written directly by the subagent:
 
-1. `round_<N>/hypothesis.json` — 仮説定義（スキーマは qlib-hypothesis-gen.md 参照）
-2. `round_<N>/experiment.json` — 実験仕様（factor_name, formulation, variables）
+1. `round_<N>/hypothesis.json` — Hypothesis definition (see qlib-hypothesis-gen.md for schema)
+2. `round_<N>/experiment.json` — Experiment specification (factor_name, formulation, variables)
 
-## 制約
+## Constraints
 
-- 失敗済み仮説（TraceView の failed_hypotheses_summary）を繰り返さない
-- factor_name は有効な Python 識別子 `[a-z][a-z0-9_]*`
-- Look-ahead bias のない計算式のみ提案
-- `data_quality` で `usable=false` のカラムに依存する仮説は提案しない
-- 出力は必ず valid JSON
+- Do not repeat previously failed hypotheses (failed_hypotheses_summary in TraceView)
+- factor_name must be a valid Python identifier `[a-z][a-z0-9_]*`
+- Only propose formulas without look-ahead bias
+- Do not propose hypotheses that depend on columns marked `usable=false` in `data_quality`
+- Output must be valid JSON
 
-## 呼び出しパターン
+## Invocation Pattern
 
 ```
 Agent tool:
   prompt: |
-    あなたは Planner サブエージェントです。
-    以下の TraceView を分析し、新しいファクター仮説を提案してください。
+    You are the Planner subagent.
+    Analyze the following TraceView and propose a new factor hypothesis.
 
     TraceView: {trace_view_json}
-    利用可能カラム（実データあり）: {usable_columns}
-    利用不可カラム: {unusable_columns}（欠損率が高く使用禁止）
-    出力先: {artifact_dir}/round_{N}/
+    Usable columns (have real data): {usable_columns}
+    Unusable columns: {unusable_columns} (high missing rate, usage prohibited)
+    Output directory: {artifact_dir}/round_{N}/
 
-    hypothesis.json と experiment.json を Write tool で書き出してください。
-    スキーマは .claude/skills/qlib-hypothesis-gen.md に従うこと。
-    利用不可カラムに依存する仮説は提案しないこと。
+    Write hypothesis.json and experiment.json using the Write tool.
+    Follow the schema defined in .claude/skills/qlib-hypothesis-gen.md.
+    Do not propose hypotheses that depend on unusable columns.
 ```

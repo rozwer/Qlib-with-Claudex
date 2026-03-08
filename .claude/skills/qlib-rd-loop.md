@@ -5,52 +5,52 @@ description: Run the Qlib factor R&D loop — propose hypotheses, generate code,
 
 # Qlib Factor R&D Loop
 
-自動ファクター探索ループのオーケストレーター。
-各ステップはサブエージェント（Agent tool）に委託する。
+Orchestrator for the automated factor discovery loop.
+Each step is delegated to a subagent (Agent tool).
 
-## サブエージェント構成
+## Subagent Configuration
 
-| ステップ | サブエージェント | 定義 |
-|---------|---------------|------|
-| 仮説生成 + 実験設計 | Planner | `.claude/subagents/planner.md` |
-| コード生成 | Coder | `.claude/subagents/coder.md` |
-| バックテスト実行 | _(Bash 直接)_ | `python factor.py` |
-| 結果評価 | Evaluator | `.claude/subagents/evaluator.md` |
+| Step | Subagent | Definition |
+|------|----------|------------|
+| Hypothesis generation + experiment design | Planner | `.claude/subagents/planner.md` |
+| Code generation | Coder | `.claude/subagents/coder.md` |
+| Backtest execution | _(Bash directly)_ | `python factor.py` |
+| Result evaluation | Evaluator | `.claude/subagents/evaluator.md` |
 
-## 設定
+## Settings
 
-| パラメータ | デフォルト | 説明 |
-|-----------|---------|------|
-| scenario | factor | Phase 1 は factor 固定 |
-| rounds | 5 | 実験ラウンド数 |
-| run_id | 自動生成 | ユニーク実行 ID |
-| artifact_dir | `.claude/artifacts/rdloop/<run_id>/` | 出力先 |
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| scenario | factor | Fixed to factor for Phase 1 |
+| rounds | 5 | Number of experiment rounds |
+| run_id | auto-generated | Unique run ID |
+| artifact_dir | `.claude/artifacts/rdloop/<run_id>/` | Output directory |
 
-## 前提条件
+## Prerequisites
 
-### Qlib データの準備
+### Preparing Qlib Data
 
 ```bash
-# Qlib-with-Claudex を RD-Agent venv にインストール（uv 使用）
+# Install Qlib-with-Claudex into the RD-Agent venv (using uv)
 cd RD-Agent-with-Claudex
 uv pip install -e ../Qlib-with-Claudex/
 
-# CSI300 Simple データの取得（~50MB, 2005-2021年, 714銘柄）
+# Fetch CSI300 Simple data (~50MB, 2005-2021, 714 stocks)
 cd ../Qlib-with-Claudex/scripts
 python get_data.py qlib_data --name qlib_data_simple \
   --target_dir ~/.qlib/qlib_data/cn_data --region cn
 
-# 動作確認
+# Verify installation
 python -c "import qlib; print(qlib.__version__)"
 ```
 
-### source_data.h5 の作成
+### Creating source_data.h5
 
-**重要**: macOS では `multiprocessing.set_start_method("fork", force=True)` が必須。
-スクリプトファイルとして実行すること（stdin 不可、multiprocessing spawn エラー回避）。
+**Important**: On macOS, `multiprocessing.set_start_method("fork", force=True)` is required.
+Run as a script file (stdin is not supported; this avoids multiprocessing spawn errors).
 
 ```python
-# /tmp/prepare_source_data.py として保存して実行
+# Save as /tmp/prepare_source_data.py and execute
 import multiprocessing
 multiprocessing.set_start_method("fork", force=True)
 import qlib, pandas as pd
@@ -60,7 +60,7 @@ from qlib.data import D
 
 instruments = D.instruments("csi300")
 stock_list = D.list_instruments(instruments, start_time="2019-01-01", end_time="2020-12-31")
-symbols = sorted(stock_list.keys())[:50]  # テスト用50銘柄
+symbols = sorted(stock_list.keys())[:50]  # 50 stocks for testing
 
 df = D.features(
     symbols,
@@ -69,39 +69,39 @@ df = D.features(
 )
 df.columns = ["open", "close", "high", "low", "volume", "vwap"]
 
-# 各ラウンドの workspace に配置
+# Place in each round's workspace
 for r in range(N_ROUNDS):
     df.to_hdf(f"{ARTIFACT_DIR}/round_{r}/implementations/source_data.h5", key="data")
 ```
 
-**注意**: Simple データの期間は 2005〜2021年6月。2022年以降は空になる。
+**Note**: The Simple data covers 2005 through June 2021. Dates after 2022 will return empty results.
 
-## フロー
+## Flow
 
-### 0. Plan テンプレート展開（最初に必ず実行）
+### 0. Expand Plan Template (always run first)
 
 ```bash
-# テンプレートをコピーして変数を置換
+# Copy the template and substitute variables
 cp .claude/templates/rdloop-plan.md <artifact_dir>/plan.md
-# {{RUN_ID}}, {{N_ROUNDS}}, {{ARTIFACT_DIR}} を実際の値に置換
+# Replace {{RUN_ID}}, {{N_ROUNDS}}, {{ARTIFACT_DIR}} with actual values
 ```
 
-**このplan.mdに基づいて実行を進め、各タスクの完了時にチェックを入れること。**
-TodoWrite ツールでも同じタスクを登録し、進捗を追跡する。
+**Proceed based on this plan.md, checking off each task as it completes.**
+Also register the same tasks with the TodoWrite tool to track progress.
 
-### 1. 初期化
+### 1. Initialization
 
-- `artifact_dir/trace.json` が存在？
-  - YES → Resume: trace を読み込み次のラウンドを特定
-  - NO → 新規: ディレクトリ作成、trace.json 初期化
+- Does `artifact_dir/trace.json` exist?
+  - YES: Resume — load the trace and identify the next round
+  - NO: New run — create directories and initialize trace.json
 
-### 1b. データ品質検証（初回のみ）
+### 1b. Data Quality Validation (first run only)
 
-source_data.h5 の各カラムの欠損率を検証し、`artifact_dir/data_quality.json` に保存する。
-この情報は全ラウンドの Planner に渡される。
+Validate the missing rate of each column in source_data.h5 and save to `artifact_dir/data_quality.json`.
+This information is passed to the Planner across all rounds.
 
 ```python
-# /tmp/check_data_quality.py として実行
+# Run as /tmp/check_data_quality.py
 import multiprocessing
 multiprocessing.set_start_method("fork", force=True)
 import pandas as pd, json
@@ -116,7 +116,7 @@ for col in df.columns:
     quality["columns"][col] = {
         "notna": notna,
         "missing_pct": round((1 - notna / len(df)) * 100, 1),
-        "usable": notna > len(df) * 0.5  # 50%以上あれば利用可能
+        "usable": notna > len(df) * 0.5  # Usable if more than 50% present
     }
 quality["usable_columns"] = [c for c, v in quality["columns"].items() if v["usable"]]
 
@@ -124,7 +124,7 @@ with open(f"{ARTIFACT_DIR}/data_quality.json", "w") as f:
     json.dump(quality, f, indent=2)
 ```
 
-**出力例**:
+**Example output**:
 ```json
 {
   "usable_columns": ["open", "close", "high", "low", "volume"],
@@ -134,43 +134,43 @@ with open(f"{ARTIFACT_DIR}/data_quality.json", "w") as f:
 }
 ```
 
-### 2. ラウンドループ（N 回繰り返し）
+### 2. Round Loop (repeat N times)
 
-各ラウンド `i`:
+For each round `i`:
 
-#### a. TraceView 構築
-過去実験の圧縮サマリを生成（SOTA, 直近結果, 失敗仮説）。
-`data_quality.json` の `usable_columns` も TraceView に含める。
+#### a. Build TraceView
+Generate a compressed summary of past experiments (SOTA, recent results, failed hypotheses).
+Include `usable_columns` from `data_quality.json` in the TraceView.
 
-#### b. Plan → Planner サブエージェント
+#### b. Plan — Planner Subagent
 ```
-Agent tool に委託（.claude/subagents/planner.md 参照）
-入力: TraceView, Scenario, data_quality.json の usable_columns
-出力: round_<i>/hypothesis.json, round_<i>/experiment.json
+Delegate to Agent tool (see .claude/subagents/planner.md)
+Input: TraceView, Scenario, usable_columns from data_quality.json
+Output: round_<i>/hypothesis.json, round_<i>/experiment.json
 ```
 
-#### c. Implement → Codex CLI
+#### c. Implement — Codex CLI
 ```bash
 codex exec --full-auto -C <workspace_path> \
-  "以下のファクター仕様に基づき、<workspace_path>/factor.py を生成してください。
-   仕様: $(cat <artifact_dir>/round_<i>/experiment.json)
-   ルール: source_data.h5→result.h5, MultiIndex対応, look-ahead bias なし"
+  "Generate <workspace_path>/factor.py based on the following factor specification.
+   Spec: $(cat <artifact_dir>/round_<i>/experiment.json)
+   Rules: source_data.h5 -> result.h5, MultiIndex support, no look-ahead bias"
 ```
-**注意**: Codex は自身の Python 環境を使う。factor.py の実行は RD-Agent の venv で行うこと。
+**Note**: Codex uses its own Python environment. Run factor.py in the RD-Agent venv.
 
-#### d. Run Backtest → Bash 直接実行
+#### d. Run Backtest — Direct Bash Execution
 ```bash
 cd <artifact_dir>/round_<i>/implementations && python factor.py
-# source_data.h5 → result.h5 が生成される
+# source_data.h5 -> result.h5 is generated
 ```
 
-#### d2. IC メトリクス計算 → Bash 直接実行
+#### d2. Compute IC Metrics — Direct Bash Execution
 
-factor.py 実行後、result.h5 から IC/IR/RankIC を算出して run_result.json を生成:
+After running factor.py, compute IC/IR/RankIC from result.h5 to generate run_result.json:
 
 ```python
-# /tmp/calc_ic.py として保存して実行（stdin 不可）
-# 引数: workspace artifact_dir round_idx factor_name
+# Save as /tmp/calc_ic.py and execute (stdin not supported)
+# Args: workspace artifact_dir round_idx factor_name
 import multiprocessing
 multiprocessing.set_start_method("fork", force=True)
 import pandas as pd, numpy as np, json, sys
@@ -181,7 +181,7 @@ round_idx, factor_name = int(sys.argv[3]), sys.argv[4]
 result = pd.read_hdf(f"{workspace}/result.h5")
 source = pd.read_hdf(f"{workspace}/source_data.h5")
 
-# MultiIndex 順序に依存しない: reset_index + merge 方式
+# Index-order independent: reset_index + merge approach
 result_df = result.reset_index()
 source_df = source.reset_index()
 
@@ -198,7 +198,7 @@ merged = pd.merge(result_df[["instrument", "datetime", "factor"]],
                    on=["instrument", "datetime"])
 merged = merged.dropna(subset=["factor", "forward_return"])
 
-# Daily IC / Rank IC（groupby.apply の戻り値型問題を回避するためループ）
+# Daily IC / Rank IC (use loop to avoid groupby.apply return type issues)
 ic_list, rank_ic_list = [], []
 for dt, grp in merged.groupby("datetime"):
     if len(grp) < 5:
@@ -226,39 +226,39 @@ with open(f"{artifact_dir}/round_{round_idx}/run_result.json", "w") as f:
     json.dump(run_result, f, indent=2)
 ```
 
-結果を `round_<i>/run_result.json` に保存。
+Save results to `round_<i>/run_result.json`.
 
-#### e. Evaluate → Evaluator サブエージェント
+#### e. Evaluate — Evaluator Subagent
 ```
-Agent tool に委託（.claude/subagents/evaluator.md 参照）
-入力: run_result.json, hypothesis, SOTA baseline, code_change_summary
-出力: round_<i>/feedback.json
-注意: factor.py のソースコードは渡さない（情報分離原則）
+Delegate to Agent tool (see .claude/subagents/evaluator.md)
+Input: run_result.json, hypothesis, SOTA baseline, code_change_summary
+Output: round_<i>/feedback.json
+Note: Do not pass factor.py source code (information separation principle)
 ```
 
-#### f. 状態更新
-- `round_<i>/manifest.json` にステータス・タイムスタンプ記録
-- `trace.json` に追記
-- ラウンドサマリを表示
+#### f. State Update
+- Record status and timestamps in `round_<i>/manifest.json`
+- Append to `trace.json`
+- Display round summary
 
-### 3. 最終レポート
-全ラウンド完了後:
-- ラウンド一覧テーブル（仮説, メトリクス, 判定）
-- 最終 SOTA 詳細
-- 今後の探索提案
+### 3. Final Report
+After all rounds complete:
+- Round summary table (hypothesis, metrics, decision)
+- Final SOTA details
+- Suggestions for future exploration
 
-## Resume プロトコル
+## Resume Protocol
 
-`trace.json` に途中履歴がある場合:
-1. `round_manifest.json` から最終完了ラウンドを特定
-2. `manifest.json` の step_idx で未完了ステップを特定
-3. 次の未完了ステップから再開
+When `trace.json` contains partial history:
+1. Identify the last completed round from `round_manifest.json`
+2. Identify incomplete steps via `manifest.json` step_idx
+3. Resume from the next incomplete step
 
-## エラーハンドリング
+## Error Handling
 
-| エラー | 対応 |
-|--------|------|
-| Planner スキーマ不正 (3回) | ラウンドスキップ、manifest に記録 |
-| Coder 構文エラー | バックテスト失敗 → Evaluator が status=failed を評価 |
-| バックテストタイムアウト | run_result.json に status=timeout |
-| Evaluator スキーマ不正 (3回) | 評価スキップ、decision=false |
+| Error | Response |
+|-------|----------|
+| Planner schema invalid (3 times) | Skip round, record in manifest |
+| Coder syntax error | Backtest fails — Evaluator evaluates with status=failed |
+| Backtest timeout | Set status=timeout in run_result.json |
+| Evaluator schema invalid (3 times) | Skip evaluation, decision=false |

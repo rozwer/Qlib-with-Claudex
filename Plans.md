@@ -1,89 +1,89 @@
 # Qlib-with-Claudex — Project Plans
 
-## 全体ゴール
+## Goal
 
-Microsoft Qlib + RD-Agent の OpenAI 依存を Claude Code + Codex に完全置換し、
-自律的なファクター R&D ループを実現する。
-
----
-
-## Phase 1: 基盤構築 ✅ COMPLETE
-
-OpenAI → Claude/LiteLLM 置換、Adapter 層構築、テスト整備。
-
-- [x] **1A** Adapter 層実装（5 slot）+ 38 unit tests
-- [x] **1B** Skills / Subagents 定義（6 skills, 3 subagents）
-- [x] **1B** Codex CLI 統合（`codex exec --full-auto`）
-
-## Phase 2: LLM バックエンド整理 ✅ COMPLETE
-
-- [x] Claude をデフォルトバックエンドに設定
-- [x] tiktoken / langchain 依存削除
-- [x] deprec.py 削除
-- [x] llm_conf.py 簡素化（134→72 行）
-
-## Phase 3: インフラ・ドキュメント ✅ COMPLETE
-
-- [x] Docker 対応
-- [x] CLAUDE.md × 2（親リポ + 子リポ）
-- [x] CI 設定
-- [x] 5 skill 定義文書
-
-## Phase 4: クリーンアップ 🔶 PARTIAL
-
-- [x] base.py 修正
-- [ ] **4-1** dump/load 削除（15+ files across 5 scenarios）
-- [ ] **4-2** openai パッケージ直接参照の除去（litellm 依存は残す）
-
-## Phase 5: R&D ループ実戦検証 🔶 IN PROGRESS
-
-5 ラウンド実行済み。IC 閾値（0.03）未達だが、ワークフロー自体は動作確認済み。
-
-- [x] **5-1** 環境構築（Qlib データ + venv + source_data.h5）
-- [x] **5-2** 5 ラウンド実行（CSI300 Simple Data, 50 銘柄）
-- [x] **5-3** データ品質検証システム追加（data_quality.json）
-- [x] **5-4** IC 計算スクリプトの堅牢化（reset_index + merge + loop）
-- [x] **5-5** 教訓のスキル・サブエージェント反映
-  - groupby.transform() 強制
-  - NaN カラム事前チェック
-  - vwap フォールバック（typical price）
-- [x] **5-6** Plan テンプレート導入（`.claude/templates/rdloop-plan.md`）
-- [ ] **5-7** IC > 0.03 達成ファクターの探索（次回実行）
-- [ ] **5-8** 全銘柄（714）での検証
-- [ ] **5-9** バックテスト期間拡大（2005-2021）
-
-## Phase 6: リポジトリ公開 ✅ COMPLETE
-
-- [x] **6-1** 親リポ作成・push（rozwer/Qlib-with-Claudex）
-- [x] **6-2** 子リポ作成・push（qlib-with-claudex-sub, RD-Agent-with-Claudex）
-- [x] **6-3** README 作成（親 + 子 × 2）
-- [x] **6-4** .gitignore 整備（runtime dirs, settings.local.json）
-- [x] **6-5** 共有パーミッション設定（settings.json）
-
-## Phase 7: FX 移行 📋 PLANNED
-
-為替（FX）データへの対応拡張。
-
-- [ ] **7-1** FX データソース選定・取得パイプライン
-- [ ] **7-2** FX 向け scenario adapter
-- [ ] **7-3** FX 固有ファクター仮説テンプレート
-- [ ] **7-4** 実戦検証
-
-> 詳細: `docs/plans/2026-03-08-fx-fork-design.md`
+Replace OpenAI dependencies in Microsoft Qlib + RD-Agent with Claude Code + Codex,
+enabling autonomous factor R&D loops.
 
 ---
 
-## 残課題サマリ
+## Phase 1: Foundation ✅ COMPLETE
 
-| 優先度 | タスク | Phase |
-|--------|--------|-------|
-| High | IC > 0.03 ファクター探索 | 5-7 |
-| High | dump/load 削除 | 4-1 |
-| Medium | 全銘柄検証 | 5-8 |
-| Medium | openai 直接参照除去 | 4-2 |
-| Low | FX 移行 | 7 |
+OpenAI → Claude/LiteLLM replacement, Adapter layer, tests.
 
-## R&D ループ実行結果（参考）
+- [x] **1A** Adapter layer (5 slots) + 38 unit tests
+- [x] **1B** Skills / Subagents definitions (6 skills, 3 subagents)
+- [x] **1B** Codex CLI integration (`codex exec --full-auto`)
+
+## Phase 2: LLM Backend Cleanup ✅ COMPLETE
+
+- [x] Set Claude as default backend
+- [x] Remove tiktoken / langchain dependencies
+- [x] Delete deprec.py
+- [x] Simplify llm_conf.py (134→72 lines)
+
+## Phase 3: Infrastructure & Documentation ✅ COMPLETE
+
+- [x] Docker support
+- [x] CLAUDE.md × 2 (parent + child repos)
+- [x] CI configuration
+- [x] 5 skill definition documents
+
+## Phase 4: Cleanup 🔶 PARTIAL
+
+- [x] base.py fix
+- [ ] **4-1** Remove dump/load (15+ files across 5 scenarios)
+- [ ] **4-2** Remove direct openai package references (litellm dependency stays)
+
+## Phase 5: R&D Loop Validation 🔶 IN PROGRESS
+
+5 rounds executed. IC threshold (0.03) not met, but workflow confirmed working.
+
+- [x] **5-1** Environment setup (Qlib data + venv + source_data.h5)
+- [x] **5-2** Execute 5 rounds (CSI300 Simple Data, 50 instruments)
+- [x] **5-3** Add data quality validation system (data_quality.json)
+- [x] **5-4** Harden IC calculation script (reset_index + merge + loop)
+- [x] **5-5** Reflect lessons in skills/subagents
+  - Enforce groupby.transform()
+  - Pre-check NaN columns
+  - vwap fallback (typical price)
+- [x] **5-6** Introduce plan template (`.claude/templates/rdloop-plan.md`)
+- [ ] **5-7** Find factor with IC > 0.03 (next run)
+- [ ] **5-8** Validate with all instruments (714)
+- [ ] **5-9** Extend backtest period (2005-2021)
+
+## Phase 6: Repository Publication ✅ COMPLETE
+
+- [x] **6-1** Create & push parent repo (rozwer/Qlib-with-Claudex)
+- [x] **6-2** Create & push child repos (qlib-with-claudex-sub, RD-Agent-with-Claudex)
+- [x] **6-3** Create READMEs (parent + 2 children)
+- [x] **6-4** Configure .gitignore (runtime dirs, settings.local.json)
+- [x] **6-5** Shared permissions (settings.json)
+
+## Phase 7: FX Migration 📋 PLANNED
+
+Extend to FX (foreign exchange) data.
+
+- [ ] **7-1** FX data source selection & acquisition pipeline
+- [ ] **7-2** FX scenario adapter
+- [ ] **7-3** FX-specific factor hypothesis templates
+- [ ] **7-4** Validation
+
+> Details: `docs/plans/2026-03-08-fx-fork-design.md`
+
+---
+
+## Open Issues
+
+| Priority | Task | Phase |
+|----------|------|-------|
+| High | Find factor with IC > 0.03 | 5-7 |
+| High | Remove dump/load | 4-1 |
+| Medium | Full instrument validation | 5-8 |
+| Medium | Remove direct openai references | 4-2 |
+| Low | FX migration | 7 |
+
+## R&D Loop Results (Reference)
 
 | Round | Factor | IC | Decision |
 |-------|--------|------|----------|

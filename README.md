@@ -1,57 +1,57 @@
 # Qlib-with-Claudex
 
-Microsoft Qlib + RD-Agent を Claude Code + Codex で自律駆動する量的投資 R&D フレームワーク。
+A quantitative investment R&D framework that autonomously drives Microsoft Qlib + RD-Agent using Claude Code + Codex.
 
-## 概要
+## Overview
 
-OpenAI API 依存を **Claude Code サブエージェント + Codex CLI** に置き換え、
-「Python → LLM API」から「**Claude Code → Python/Qlib を道具として使う**」制御の反転を実現。
+Replaces OpenAI API dependencies with **Claude Code subagents + Codex CLI**,
+achieving a control inversion from "Python → LLM API" to "**Claude Code → uses Python/Qlib as tools**".
 
-## リポジトリ構成
+## Repository Structure
 
 ```
-Qlib/                          ← このリポジトリ（親）
-├── .claude/                   ← Claude Code 設定・スキル・サブエージェント定義
-│   ├── skills/                # RD ループ・仮説生成・ファクター実装 etc.
-│   ├── subagents/             # Planner / Coder / Evaluator 定義
-│   ├── settings.json          # 共有パーミッション
-│   └── artifacts/             # 実験アーティファクト
-├── Qlib-with-Claudex/         ← microsoft/qlib フォーク（サブプロジェクト）
-├── RD-Agent-with-Claudex/     ← microsoft/RD-Agent フォーク（サブプロジェクト）
-└── docs/plans/                ← 設計ドキュメント
+Qlib/                          ← This repository (parent)
+├── .claude/                   ← Claude Code config, skills, subagent definitions
+│   ├── skills/                # RD loop, hypothesis generation, factor implementation, etc.
+│   ├── subagents/             # Planner / Coder / Evaluator definitions
+│   ├── settings.json          # Shared permissions
+│   └── artifacts/             # Experiment artifacts
+├── Qlib-with-Claudex/         ← microsoft/qlib fork (subproject)
+├── RD-Agent-with-Claudex/     ← microsoft/RD-Agent fork (subproject)
+└── docs/plans/                ← Design documents
 ```
 
-## セットアップ
+## Setup
 
 ```bash
-# 1. 親リポジトリをクローン
+# 1. Clone the parent repository
 git clone git@github.com:rozwer/Qlib-with-Claudex.git Qlib
 cd Qlib
 
-# 2. 子リポジトリをクローン
+# 2. Clone child repositories
 git clone git@github.com:rozwer/qlib-with-claudex-sub.git Qlib-with-Claudex
 git clone git@github.com:rozwer/RD-Agent-with-Claudex.git RD-Agent-with-Claudex
 
-# 3. RD-Agent 仮想環境セットアップ
+# 3. Set up RD-Agent virtual environment
 cd RD-Agent-with-Claudex
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 
-# 4. Qlib データダウンロード
+# 4. Download Qlib data
 python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/cn_data --region cn
 ```
 
-## R&D ループ
+## R&D Loop
 
-Claude Code が以下のサブエージェントを順に呼び出してファクター探索を自動化:
+Claude Code sequentially invokes the following subagents to automate factor discovery:
 
-| ステップ | コンポーネント | 役割 |
-|----------|---------------|------|
-| 仮説生成 | Planner (Agent tool) | TraceView 分析 → 新仮説提案 |
-| コード生成 | Codex CLI (`codex exec --full-auto`) | ファクター計算コード生成 |
-| 実行 | Bash (RD-Agent venv) | factor.py 実行 + IC 計算 |
-| 評価 | Evaluator (Agent tool) | 結果分析 → フィードバック |
+| Step | Component | Role |
+|------|-----------|------|
+| Hypothesis Generation | Planner (Agent tool) | TraceView analysis → propose new hypothesis |
+| Code Generation | Codex CLI (`codex exec --full-auto`) | Generate factor calculation code |
+| Execution | Bash (RD-Agent venv) | Run factor.py + calculate IC |
+| Evaluation | Evaluator (Agent tool) | Analyze results → provide feedback |
 
-## ライセンス
+## License
 
-MIT（Microsoft Qlib / RD-Agent から継承）
+MIT (inherited from Microsoft Qlib / RD-Agent)

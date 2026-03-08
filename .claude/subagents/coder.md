@@ -1,71 +1,71 @@
-# Coder サブエージェント（Codex CLI）
+# Coder Subagent (Codex CLI)
 
-Factor RD ループのファクター実装コード生成を担当。
-**Codex CLI** を Bash tool 経由で呼び出す。
+Responsible for generating factor implementation code in the Factor RD loop.
+Invokes **Codex CLI** via the Bash tool.
 
-## 役割
+## Role
 
-experiment.json のファクター仕様に基づき、Qlib 互換の factor.py を生成する。
+Generates a Qlib-compatible factor.py based on the factor specification in experiment.json.
 
-## 呼び出し方法
+## Invocation Method
 
 ```bash
 codex exec --full-auto -C <workspace_path> \
-  "以下のファクター仕様に基づき、<workspace_path>/factor.py を生成してください。
+  "Generate <workspace_path>/factor.py based on the following factor specification.
 
-   仕様:
+   Specification:
    $(cat <artifact_dir>/round_<N>/experiment.json)
 
-   実装ルール:
-   - source_data.h5 から pd.read_hdf で読み込み (key='data')
-   - columns: open, close, high, low, volume, vwap / MultiIndex: (instrument, datetime) の順序
-   - result.h5 に key='data' で書き出し（Series、name は factor_name）
-   - groupby(level='instrument').transform() で銘柄別計算（apply は index 崩壊の原因になるため禁止）
-   - look-ahead bias なし（shift, rolling のみ）
-   - NaN/inf を replace([np.inf, -np.inf], np.nan) で処理
-   - 出力 Series の index は入力 DataFrame の index と完全一致させること
-   - カラムが全 NaN の場合に備え、使用前に notna().sum() > 0 でチェックすること"
+   Implementation rules:
+   - Read from source_data.h5 using pd.read_hdf (key='data')
+   - columns: open, close, high, low, volume, vwap / MultiIndex: (instrument, datetime) order
+   - Write to result.h5 with key='data' (Series, name is factor_name)
+   - Use groupby(level='instrument').transform() for per-instrument calculations (apply is prohibited as it causes index corruption)
+   - No look-ahead bias (use only shift, rolling)
+   - Handle NaN/inf with replace([np.inf, -np.inf], np.nan)
+   - The output Series index must exactly match the input DataFrame index
+   - Check notna().sum() > 0 before using any column in case it is entirely NaN"
 ```
 
-## CLI オプション
+## CLI Options
 
-| オプション | 値 | 説明 |
-|-----------|---|------|
-| `exec` | - | 非対話モード |
-| `--full-auto` | - | 承認不要 + workspace-write sandbox |
-| `-C` | workspace path | 作業ディレクトリ（書込み許可） |
+| Option | Value | Description |
+|--------|-------|-------------|
+| `exec` | - | Non-interactive mode |
+| `--full-auto` | - | No approval required + workspace-write sandbox |
+| `-C` | workspace path | Working directory (write-enabled) |
 
-## 入力
+## Input
 
-- **experiment.json**: ファクター仕様（factor_name, formulation, variables）
-- experiment.json の内容は prompt にインライン展開して渡す
+- **experiment.json**: Factor specification (factor_name, formulation, variables)
+- The contents of experiment.json are inlined into the prompt
 
-## 出力ファイル
+## Output Files
 
-- `round_<N>/implementations/factor.py` — 実行可能なファクター計算コード
+- `round_<N>/implementations/factor.py` — Executable factor computation code
 
-## 注意事項
+## Notes
 
-- Codex は独自の Python 環境を使う（Python 3.14、tables/pytables がない）
-- factor.py の**実行**は RD-Agent の venv (`cd RD-Agent-with-Claudex && source .venv/bin/activate`) で行うこと
-- Codex は `--full-auto` モードで自律的に `py_compile` やダミーデータテストを実行してバグを検出する
-- Codex は既存ファイルを読んでパターンを学習するため、前ラウンドの factor.py が参考になる
+- Codex uses its own Python environment (Python 3.14, no tables/pytables)
+- **Execution** of factor.py must be done in the RD-Agent venv (`cd RD-Agent-with-Claudex && source .venv/bin/activate`)
+- In `--full-auto` mode, Codex autonomously runs `py_compile` and dummy data tests to detect bugs
+- Codex reads existing files to learn patterns, so previous rounds' factor.py files serve as references
 
-## 実戦で判明した問題と対策
+## Issues Discovered in Practice and Countermeasures
 
-| 問題 | 対策 |
-|------|------|
-| `groupby.apply()` で index が崩壊し全 NaN | `groupby.transform()` を使用する |
-| MultiIndex の順序が (instrument, datetime) | `groupby(level=0)` か `groupby(level="instrument")` で統一 |
-| カラム（例: vwap）が全 NaN | 使用前に `notna().sum() > 0` でチェック。代替計算（typical price 等）をフォールバックに |
-| Codex 環境に tables 未導入 | `py_compile` で構文検証のみ。実データ検証は venv で行う |
+| Issue | Countermeasure |
+|-------|----------------|
+| `groupby.apply()` corrupts index, resulting in all NaN | Use `groupby.transform()` instead |
+| MultiIndex order is (instrument, datetime) | Use `groupby(level=0)` or `groupby(level="instrument")` consistently |
+| Column (e.g., vwap) is entirely NaN | Check `notna().sum() > 0` before use. Fall back to alternative calculations (e.g., typical price) |
+| tables not installed in Codex environment | Syntax verification only via `py_compile`. Real data verification is done in the venv |
 
-## 実装ガイドライン
+## Implementation Guidelines
 
-`.claude/skills/qlib-factor-implement.md` に従う。要点:
+Follow `.claude/skills/qlib-factor-implement.md`. Key points:
 
-- `source_data.h5` から読み込み、`result.h5` に書き出す
-- MultiIndex (datetime, instrument) を正しく扱う
-- Look-ahead bias を避ける（`.shift(N)` で N > 0、`.rolling()` のみ）
-- NaN / inf を適切に処理
-- Valid Python syntax であること
+- Read from `source_data.h5`, write to `result.h5`
+- Handle MultiIndex (datetime, instrument) correctly
+- Avoid look-ahead bias (`.shift(N)` with N > 0, `.rolling()` only)
+- Handle NaN / inf appropriately
+- Must be valid Python syntax

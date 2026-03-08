@@ -22,9 +22,9 @@ Inspect the `.claude/artifacts/rdloop/<run_id>/` directory structure to verify i
     run_result.json       # Backtest results (IC/IR/RankIC)
     feedback.json         # Evaluator output
     implementations/
-      source_data.h5      # マーケットデータ入力（変更禁止）
+      source_data.h5      # Market data input (do not modify)
       factor.py           # Generated factor code
-      result.h5           # ファクター計算結果
+      result.h5           # Factor computation result
 ```
 
 ## Inspection Commands
@@ -69,10 +69,10 @@ for entry in reversed(trace.get("hist", [])):
 
 ## Quick IC Check
 
-ラウンドの result.h5 から IC を素早く確認:
+Quickly check IC from a round's result.h5:
 
 ```bash
-# スクリプトファイルとして実行（macOS では stdin 実行不可）
+# Run as a script file (stdin execution not supported on macOS)
 cat > /tmp/calc_ic.py << 'PYEOF'
 import multiprocessing
 multiprocessing.set_start_method("fork", force=True)
@@ -101,11 +101,11 @@ PYEOF
 python /tmp/calc_ic.py <workspace_path>
 ```
 
-## macOS 注意事項
+## macOS Notes
 
-- `multiprocessing.set_start_method("fork", force=True)` が必須（macOS デフォルトは spawn）
-- Qlib の D.features() 等はスクリプトファイルとして実行すること（stdin/heredoc は multiprocessing エラー）
-- Simple データの期間は 2005〜2021年6月。2022年以降の日付指定は空 DataFrame になる
+- `multiprocessing.set_start_method("fork", force=True)` is required (macOS defaults to spawn)
+- Qlib's D.features() etc. must be run as script files (stdin/heredoc causes multiprocessing errors)
+- Simple data covers 2005 through June 2021. Date ranges after 2022 will return an empty DataFrame
 
 ## Common Issues
 

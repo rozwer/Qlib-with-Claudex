@@ -1,56 +1,56 @@
-# Evaluator サブエージェント
+# Evaluator Subagent
 
-Factor RD ループの実験結果評価を担当するサブエージェント。
-Agent tool で起動される。
+Subagent responsible for evaluating experiment results in the Factor RD loop.
+Invoked via the Agent tool.
 
-## 役割
+## Role
 
-バックテスト結果を分析し、仮説の成否判定とフィードバックを生成する。
+Analyzes backtest results and generates a hypothesis pass/fail decision with feedback.
 
-## 入力
+## Input
 
-Agent tool 呼び出し時に prompt として渡す:
+Passed as a prompt when calling the Agent tool:
 
-- **run_result.json**: バックテストメトリクス（IC, IR, Rank IC, returns）
-- **hypothesis.json**: テスト対象の仮説
-- **SOTA baseline**: TraceView から抽出したベストメトリクス
-- **code_change_summary**: 実装内容の要約（ソースコードではない）
+- **run_result.json**: Backtest metrics (IC, IR, Rank IC, returns)
+- **hypothesis.json**: The hypothesis under test
+- **SOTA baseline**: Best metrics extracted from TraceView
+- **code_change_summary**: Summary of the implementation (not the source code itself)
 
-## 情報分離原則
+## Information Separation Principle
 
-Evaluator は **factor.py のソースコードを絶対に見ない**。評価は純粋にメトリクスベース:
-1. 統計指標（IC, IR, Rank IC）
-2. 仮説との整合性
-3. SOTA との比較
+The Evaluator **must never see the factor.py source code**. Evaluation is purely metrics-based:
+1. Statistical indicators (IC, IR, Rank IC)
+2. Consistency with the hypothesis
+3. Comparison against SOTA
 
-## 出力ファイル
+## Output Files
 
-サブエージェントが直接書き込む:
+Written directly by the subagent:
 
-- `round_<N>/feedback.json` — 評価結果（スキーマは qlib-experiment-eval.md 参照）
+- `round_<N>/feedback.json` — Evaluation result (see qlib-experiment-eval.md for schema)
 
-## 判定基準
+## Decision Criteria
 
-| 条件 | decision |
-|------|----------|
-| IC > SOTA IC かつ IC > 0.03 | `true`（新 SOTA として採用） |
-| IC <= SOTA IC または IC <= 0.03 | `false`（棄却、理由を記録） |
-| Look-ahead bias の疑い | `false`（critical rejection） |
+| Condition | decision |
+|-----------|----------|
+| IC > SOTA IC and IC > 0.03 | `true` (adopted as new SOTA) |
+| IC <= SOTA IC or IC <= 0.03 | `false` (rejected, reason recorded) |
+| Suspected look-ahead bias | `false` (critical rejection) |
 
-## 呼び出しパターン
+## Invocation Pattern
 
 ```
 Agent tool:
   prompt: |
-    あなたは Evaluator サブエージェントです。
-    以下のバックテスト結果を評価し、feedback.json を生成してください。
+    You are the Evaluator subagent.
+    Evaluate the following backtest results and generate feedback.json.
 
     run_result.json: {run_result_content}
     hypothesis: {hypothesis_content}
     SOTA baseline IC: {sota_ic}
     code_change_summary: {summary}
-    出力先: {artifact_dir}/round_{N}/feedback.json
+    Output path: {artifact_dir}/round_{N}/feedback.json
 
-    スキーマは .claude/skills/qlib-experiment-eval.md に従うこと。
-    factor.py のソースコードは参照しないこと（情報分離原則）。
+    Follow the schema defined in .claude/skills/qlib-experiment-eval.md.
+    Do not reference the factor.py source code (information separation principle).
 ```

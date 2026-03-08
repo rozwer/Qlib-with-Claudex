@@ -1,97 +1,97 @@
 # Qlib-with-Claudex / RD-Agent-with-Claudex
 
-Microsoft Qlib と RD-Agent をフォークし、Claude Code がファクター研究ループを自律実行する OSS。
+A fork of Microsoft Qlib and RD-Agent where Claude Code autonomously executes factor research loops.
 
 ## Quick Start
 
 ```bash
-# 1. 環境セットアップ
+# 1. Environment setup
 cd RD-Agent-with-Claudex
 source .venv/bin/activate   # Python 3.12 (uv)
 
-# 2. Qlib データ取得（初回のみ）
+# 2. Download Qlib data (first time only)
 cd ../Qlib-with-Claudex/scripts
 python get_data.py qlib_data --name qlib_data_simple \
   --target_dir ~/.qlib/qlib_data/cn_data --region cn
 
-# 3. 既存テスト実行（38 pass）
+# 3. Run existing tests (38 pass)
 cd ../../RD-Agent-with-Claudex
 pytest test/adapters/ -v
 ```
 
-## R&D ループの実行
+## Running the R&D Loop
 
-Claude Code に以下のように依頼する:
+Ask Claude Code something like:
 
-> 「ファクター R&D ループを 3 ラウンド回してください」
+> "Run a factor R&D loop for 3 rounds."
 
-ループは自動で以下を繰り返す:
+The loop automatically repeats the following steps:
 
-1. **Planner** (Agent tool) → 仮説 + 実験仕様（hypothesis.json, experiment.json）
-2. **Coder** (`codex exec --full-auto`) → factor.py 生成
-3. **Backtest** (Bash) → `python factor.py`（source_data.h5 → result.h5、RD-Agent venv で実行）
-4. **IC 計算** (Bash) → run_result.json（IC/IR/RankIC）
-5. **Evaluator** (Agent tool) → feedback.json（IC > 0.03 で SOTA 採用）
+1. **Planner** (Agent tool) — Hypothesis + experiment spec (hypothesis.json, experiment.json)
+2. **Coder** (`codex exec --full-auto`) — Generate factor.py
+3. **Backtest** (Bash) — `python factor.py` (source_data.h5 → result.h5, executed in RD-Agent venv)
+4. **IC Calculation** (Bash) — run_result.json (IC/IR/RankIC)
+5. **Evaluator** (Agent tool) — feedback.json (adopt as SOTA if IC > 0.03)
 
-詳細: `.claude/skills/qlib-rd-loop.md`
+Details: `.claude/skills/qlib-rd-loop.md`
 
 ## Project Structure
 
 ```
 Qlib/
-├── Qlib-with-Claudex/           # microsoft/qlib フォーク
-├── RD-Agent-with-Claudex/       # microsoft/RD-Agent フォーク
-│   ├── rdagent/adapters/        # 5スロット Adapter 層
-│   ├── rdagent/oai/backend/     # LLM バックエンド（LiteLLM + Claude shim）
-│   ├── rdagent/core/            # データ構造（Hypothesis, Trace, Experiment）
-│   ├── test/adapters/           # Adapter テスト（38 pass）
-│   └── .venv/                   # Python 3.12 仮想環境
+├── Qlib-with-Claudex/           # microsoft/qlib fork
+├── RD-Agent-with-Claudex/       # microsoft/RD-Agent fork
+│   ├── rdagent/adapters/        # 5-slot Adapter layer
+│   ├── rdagent/oai/backend/     # LLM backend (LiteLLM + Claude shim)
+│   ├── rdagent/core/            # Data structures (Hypothesis, Trace, Experiment)
+│   ├── test/adapters/           # Adapter tests (38 pass)
+│   └── .venv/                   # Python 3.12 virtual environment
 ├── .claude/
-│   ├── skills/                  # 5 スキル定義
+│   ├── skills/                  # 5 skill definitions
 │   ├── subagents/               # Planner / Coder / Evaluator
-│   └── artifacts/rdloop/        # 実行結果（trace.json が SSOT）
-└── docs/plans/                  # 設計ドキュメント
+│   └── artifacts/rdloop/        # Execution results (trace.json is SSOT)
+└── docs/plans/                  # Design documents
 ```
 
 ## Skills & Subagents
 
-| スキル | 用途 |
-|--------|------|
-| qlib-rd-loop | ループ全体のオーケストレーション |
-| qlib-hypothesis-gen | Planner 向け仮説生成ガイドライン |
-| qlib-factor-implement | Coder 向け factor.py 実装ガイドライン |
-| qlib-experiment-eval | Evaluator 向け判定基準 |
-| qlib-artifact-inspect | artifact ディレクトリの検査・IC 確認 |
+| Skill | Purpose |
+|-------|---------|
+| qlib-rd-loop | Overall loop orchestration |
+| qlib-hypothesis-gen | Hypothesis generation guidelines for Planner |
+| qlib-factor-implement | factor.py implementation guidelines for Coder |
+| qlib-experiment-eval | Evaluation criteria for Evaluator |
+| qlib-artifact-inspect | Inspect artifact directory / check IC |
 
-| サブエージェント | 実行方法 | 役割 |
-|----------------|---------|------|
-| Planner | Agent tool | 仮説生成 + 実験設計（TraceView → JSON） |
-| Coder | **Codex CLI** (`codex exec`) | factor.py 生成（experiment.json → Python） |
-| Evaluator | Agent tool | メトリクス評価（IC ベース判定、コード非参照） |
+| Subagent | Execution Method | Role |
+|----------|-----------------|------|
+| Planner | Agent tool | Hypothesis generation + experiment design (TraceView → JSON) |
+| Coder | **Codex CLI** (`codex exec`) | Generate factor.py (experiment.json → Python) |
+| Evaluator | Agent tool | Metrics evaluation (IC-based decision, no code reference) |
 
 ## Key Architecture
 
-**制御の反転**: Claude Code が Python/Qlib/Codex を道具として使う（API Key 不要）。
+**Control Inversion**: Claude Code uses Python/Qlib/Codex as tools (no API key required).
 
 ```
-Claude Code (オーケストレーター)
-  ├── Planner  → Agent tool でサブエージェントに仮説生成を委託
-  ├── Coder   → codex exec --full-auto で factor.py 生成
-  ├── Backtest → Bash で python factor.py (RD-Agent venv)
-  ├── IC計算   → Bash でスクリプト実行
-  └── Evaluator → Agent tool でサブエージェントに評価を委託
+Claude Code (Orchestrator)
+  ├── Planner  → Delegates hypothesis generation to subagent via Agent tool
+  ├── Coder   → Generates factor.py via codex exec --full-auto
+  ├── Backtest → Runs python factor.py via Bash (RD-Agent venv)
+  ├── IC Calc  → Executes calculation script via Bash
+  └── Evaluator → Delegates evaluation to subagent via Agent tool
 ```
 
-## macOS 注意事項
+## macOS Notes
 
-- `multiprocessing.set_start_method("fork", force=True)` が必須
-- Qlib のデータ取得はスクリプトファイルで実行（stdin 不可）
-- Simple データの期間: 2005〜2021年6月
+- `multiprocessing.set_start_method("fork", force=True)` is required
+- Qlib data download must be run from a script file (stdin not supported)
+- Simple data covers the period 2005–June 2021
 
 ## Conventions
 
-- ドキュメントは簡潔な日本語
-- ライセンス: MIT 継承
-- ブランド名: `with-Claudex`
-- パッケージ管理: uv
-- テスト: `pytest test/adapters/ -v`
+- Documentation in concise English
+- License: MIT (inherited)
+- Brand name: `with-Claudex`
+- Package manager: uv
+- Tests: `pytest test/adapters/ -v`

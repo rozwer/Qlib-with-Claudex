@@ -3,32 +3,32 @@ name: qlib-setup-check
 description: Verify that all prerequisites for running the Qlib R&D loop are met. Use when starting a new session or before running the loop.
 ---
 
-# Qlib R&D ループ セットアップ検証
+# Qlib R&D Loop Setup Verification
 
-R&D ループ実行前に必要な環境・データ・ツールを検証する。
+Verify the environment, data, and tools required before running the R&D loop.
 
-## チェックリスト
+## Checklist
 
-以下を順番に Bash で検証し、結果を表示する。
+Run the following checks sequentially via Bash and display the results.
 
-### 1. Python 仮想環境
+### 1. Python Virtual Environment
 
 ```bash
 cd RD-Agent-with-Claudex && source .venv/bin/activate
-python --version  # Python 3.12 が必要
+python --version  # Python 3.12 required
 ```
 
-**失敗時**: `uv venv .venv --python 3.12 && uv pip install -e .`
+**On failure**: `uv venv .venv --python 3.12 && uv pip install -e .`
 
-### 2. Qlib インストール
+### 2. Qlib Installation
 
 ```bash
 python -c "import qlib; print(f'qlib {qlib.__version__}')"
 ```
 
-**失敗時**: `uv pip install -e ../Qlib-with-Claudex/`
+**On failure**: `uv pip install -e ../Qlib-with-Claudex/`
 
-### 3. Qlib データ
+### 3. Qlib Data
 
 ```bash
 ls ~/.qlib/qlib_data/cn_data/calendars/day.txt && \
@@ -37,14 +37,14 @@ ls ~/.qlib/qlib_data/cn_data/calendars/day.txt && \
   tail -1 ~/.qlib/qlib_data/cn_data/calendars/day.txt
 ```
 
-**失敗時**:
+**On failure**:
 ```bash
 cd Qlib-with-Claudex/scripts
 python get_data.py qlib_data --name qlib_data_simple \
   --target_dir ~/.qlib/qlib_data/cn_data --region cn
 ```
 
-### 4. 主要 Python パッケージ
+### 4. Key Python Packages
 
 ```bash
 python -c "
@@ -55,7 +55,7 @@ print(f'pytables {tables.__version__}')
 "
 ```
 
-**失敗時**: `uv pip install tables`
+**On failure**: `uv pip install tables`
 
 ### 5. Codex CLI
 
@@ -63,30 +63,30 @@ print(f'pytables {tables.__version__}')
 which codex && codex --version
 ```
 
-**失敗時**: `bun install -g @anthropic-ai/codex` または `npm install -g @anthropic-ai/codex`
+**On failure**: `bun install -g @anthropic-ai/codex` or `npm install -g @anthropic-ai/codex`
 
-### 6. Adapter テスト
+### 6. Adapter Tests
 
 ```bash
 cd RD-Agent-with-Claudex && pytest test/adapters/ -v --tb=short 2>&1 | tail -5
 ```
 
-**失敗時**: テストエラー内容を確認して修正
+**On failure**: Review test error output and fix
 
-## 出力フォーマット
+## Output Format
 
-各チェックの結果を以下のテーブルで表示:
+Display results for each check in the following table:
 
 ```
-| # | チェック項目 | 状態 | 詳細 |
-|---|------------|------|------|
+| # | Check Item | Status | Details |
+|---|------------|--------|---------|
 | 1 | Python venv | OK | 3.12.x |
 | 2 | Qlib | OK | 0.9.8.dev27 |
-| 3 | Qlib データ | OK | 2005-01-04 〜 2021-06-11 |
+| 3 | Qlib data | OK | 2005-01-04 to 2021-06-11 |
 | 4 | pytables | OK | 3.x.x |
 | 5 | Codex CLI | OK | 0.97.0 |
-| 6 | Adapter テスト | OK | 38 passed, 1 skipped |
+| 6 | Adapter tests | OK | 38 passed, 1 skipped |
 ```
 
-全て OK なら「R&D ループ実行可能」と表示。
-NG がある場合は修正手順を提示。
+If all checks pass, display "R&D loop is ready to run."
+If any check fails, provide remediation steps.

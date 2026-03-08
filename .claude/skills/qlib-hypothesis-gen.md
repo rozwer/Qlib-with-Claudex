@@ -5,18 +5,18 @@ description: Generate a novel factor hypothesis from market data analysis and pr
 
 # Qlib Factor Hypothesis Generation
 
-Planner サブエージェントが参照するガイドライン。
-直接呼び出しではなく、Planner が Agent tool として起動された際にこのスキーマに従う。
+Guidelines referenced by the Planner subagent.
+Not called directly — the Planner follows this schema when launched as an Agent tool.
 
-## 入力コンテキスト
+## Input Context
 
-Planner サブエージェントが受け取る:
-- **TraceView**: 過去実験の圧縮サマリ（SOTA, 直近結果, 失敗仮説）
-- **Scenario**: マーケットデータ記述（columns: open, close, high, low, volume, vwap）
-- **data_quality.json**: 各カラムの欠損率と利用可否（`usable_columns` リスト）
-- **制約**: 失敗済み仮説の繰り返し禁止、`usable=false` のカラムは使用禁止
+The Planner subagent receives:
+- **TraceView**: Compressed summary of past experiments (SOTA, recent results, failed hypotheses)
+- **Scenario**: Market data description (columns: open, close, high, low, volume, vwap)
+- **data_quality.json**: Missing rate and usability of each column (`usable_columns` list)
+- **Constraints**: No repeating failed hypotheses; columns with `usable=false` must not be used
 
-## 出力スキーマ
+## Output Schema
 
 ```json
 {
@@ -33,25 +33,25 @@ Planner サブエージェントが受け取る:
 }
 ```
 
-## 仮説カテゴリ
+## Hypothesis Categories
 
-| カテゴリ | 例 | 典型的 IC |
-|---------|-----|----------|
-| Momentum | 価格/出来高トレンド継続 | 0.02-0.05 |
-| Mean Reversion | 移動平均からの乖離 | 0.02-0.04 |
-| Volatility | 実現 vs インプライド Vol スプレッド | 0.01-0.03 |
-| Liquidity | ビッドアスク、ターンオーバー | 0.02-0.04 |
-| Microstructure | 注文フロー、VWAP 乖離 | 0.03-0.06 |
+| Category | Example | Typical IC |
+|----------|---------|------------|
+| Momentum | Price/volume trend continuation | 0.02-0.05 |
+| Mean Reversion | Deviation from moving average | 0.02-0.04 |
+| Volatility | Realized vs implied vol spread | 0.01-0.03 |
+| Liquidity | Bid-ask spread, turnover | 0.02-0.04 |
+| Microstructure | Order flow, VWAP deviation | 0.03-0.06 |
 
-## 品質基準
+## Quality Criteria
 
-- **Novelty**: TraceView の failed_hypotheses_summary に含まれないこと
-- **Testability**: `data_quality.json` の `usable_columns` に含まれるカラムのみで計算可能
-- **No look-ahead bias**: 各時点で過去データのみ使用
-- **Valid Python identifier**: factor_name は `[a-z][a-z0-9_]*`
+- **Novelty**: Must not appear in the TraceView's failed_hypotheses_summary
+- **Testability**: Must be computable using only columns listed in `usable_columns` from `data_quality.json`
+- **No look-ahead bias**: Use only past data at each point in time
+- **Valid Python identifier**: factor_name must match `[a-z][a-z0-9_]*`
 
-## データ品質に関する注意
+## Data Quality Notes
 
-- データソースによってカラムの欠損状況は異なる（例: Simple Data では vwap が全NaN）
-- 仮説を提案する前に `data_quality.json` を必ず確認し、`usable=false` のカラムに依存する仮説は提案しないこと
-- カラムが利用不可の場合は代替計算（例: typical price = (H+L+C)/3 で vwap 代用）も検討可能だが、その旨を明記すること
+- Column availability varies by data source (e.g., vwap is entirely NaN in Simple Data)
+- Always check `data_quality.json` before proposing a hypothesis; do not propose hypotheses that depend on columns with `usable=false`
+- If a column is unavailable, alternative calculations (e.g., typical price = (H+L+C)/3 as a vwap substitute) may be considered, but this must be explicitly noted
