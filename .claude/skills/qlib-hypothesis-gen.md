@@ -13,7 +13,8 @@ Planner サブエージェントが参照するガイドライン。
 Planner サブエージェントが受け取る:
 - **TraceView**: 過去実験の圧縮サマリ（SOTA, 直近結果, 失敗仮説）
 - **Scenario**: マーケットデータ記述（columns: open, close, high, low, volume, vwap）
-- **制約**: 失敗済み仮説の繰り返し禁止
+- **data_quality.json**: 各カラムの欠損率と利用可否（`usable_columns` リスト）
+- **制約**: 失敗済み仮説の繰り返し禁止、`usable=false` のカラムは使用禁止
 
 ## 出力スキーマ
 
@@ -45,6 +46,12 @@ Planner サブエージェントが受け取る:
 ## 品質基準
 
 - **Novelty**: TraceView の failed_hypotheses_summary に含まれないこと
-- **Testability**: 利用可能カラム（OHLCV + vwap）で計算可能
+- **Testability**: `data_quality.json` の `usable_columns` に含まれるカラムのみで計算可能
 - **No look-ahead bias**: 各時点で過去データのみ使用
 - **Valid Python identifier**: factor_name は `[a-z][a-z0-9_]*`
+
+## データ品質に関する注意
+
+- データソースによってカラムの欠損状況は異なる（例: Simple Data では vwap が全NaN）
+- 仮説を提案する前に `data_quality.json` を必ず確認し、`usable=false` のカラムに依存する仮説は提案しないこと
+- カラムが利用不可の場合は代替計算（例: typical price = (H+L+C)/3 で vwap 代用）も検討可能だが、その旨を明記すること

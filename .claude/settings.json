@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(python *)",
+      "Bash(pytest *)",
+      "Bash(pip *)",
+      "Bash(uv *)",
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "Bash(cat *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(which *)",
+      "Bash(cd *)",
+      "Bash(cp *)",
+      "Bash(rm *)",
+      "Bash(source *)",
+      "Bash(codex *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "mcp__codex__codex"
+    ]
+  }
+}

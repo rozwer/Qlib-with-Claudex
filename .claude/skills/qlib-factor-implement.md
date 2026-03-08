@@ -85,8 +85,10 @@ if __name__ == "__main__":
 | 未来データ使用 (look-ahead) | `.shift(N)` で N > 0、`.rolling()` のみ |
 | カラム名間違い | 正確に: `open`, `close`, `high`, `low`, `volume`, `vwap` |
 | MultiIndex 未対応 | `.groupby(level="instrument")` で銘柄別計算 |
-| 出力フォーマット不正 | (datetime, instrument) index の Series/DataFrame |
+| 出力フォーマット不正 | 元の MultiIndex をそのまま保持した Series |
 | ゼロ除算 | `.replace([np.inf, -np.inf], np.nan)` を追加 |
+| `groupby.apply()` で index 崩壊 | `groupby.transform()` を使うこと（apply は index を再構成し NaN 化の原因になる） |
+| 欠損カラムの使用 | `data_quality.json` で `usable=false` のカラム（例: vwap）は事前検証済み。使用前に `notna().sum() > 0` でチェックするか、代替計算を用いる |
 
 ## 出力先
 
