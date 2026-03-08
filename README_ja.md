@@ -26,21 +26,50 @@ Qlib/                          ← このリポジトリ（親）
 ## セットアップ
 
 ```bash
-# 1. 親リポジトリをクローン
-git clone git@github.com:rozwer/Qlib-with-Claudex.git Qlib
+# 1. サブモジュールごとクローン（1コマンド）
+git clone --recurse-submodules git@github.com:rozwer/Qlib-with-Claudex.git Qlib
 cd Qlib
 
-# 2. 子リポジトリをクローン
-git clone git@github.com:rozwer/qlib-with-claudex-sub.git Qlib-with-Claudex
-git clone git@github.com:rozwer/RD-Agent-with-Claudex.git RD-Agent-with-Claudex
+# すでにクローン済みの場合:
+# git submodule update --init --recursive
 
-# 3. RD-Agent 仮想環境セットアップ
+# 2. RD-Agent 仮想環境セットアップ
 cd RD-Agent-with-Claudex
-uv venv && source .venv/bin/activate
+uv venv --python 3.12 && source .venv/bin/activate
 uv pip install -e ".[dev]"
 
-# 4. Qlib データダウンロード
-python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/cn_data --region cn
+# 3. Qlib をvenvにインストール
+uv pip install -e ../Qlib-with-Claudex/
+
+# 4. Qlib 市場データダウンロード (~50MB, CSI300 2005-2021)
+cd ../Qlib-with-Claudex/scripts
+python get_data.py qlib_data --name qlib_data_simple \
+  --target_dir ~/.qlib/qlib_data/cn_data --region cn
+cd ../..
+
+# 5. source_data.h5 生成（クイックテスト）
+python scripts/prepare_source_data.py --output /tmp/source_data.h5
+
+# 6. データ品質チェック
+python scripts/check_data_quality.py /tmp/source_data.h5 /tmp/data_quality.json
+```
+
+## スクリプト
+
+| スクリプト | 用途 |
+|-----------|------|
+| `scripts/prepare_source_data.py` | Qlib 市場データから source_data.h5 を生成 |
+| `scripts/calc_ic.py` | バックテスト結果から IC/IR/RankIC を計算 |
+| `scripts/check_data_quality.py` | カラム欠損率を検査、data_quality.json を出力 |
+
+```bash
+# R&D ループ用に source_data.h5 を生成（5ラウンド、50銘柄、2019-2020）
+source RD-Agent-with-Claudex/.venv/bin/activate
+python scripts/prepare_source_data.py --output_dir .claude/artifacts/rdloop/my_run --rounds 5
+
+# カスタマイズ: 100銘柄、長期間
+python scripts/prepare_source_data.py --output_dir .claude/artifacts/rdloop/my_run \
+  --rounds 10 --n_instruments 100 --start_time 2015-01-01 --end_time 2020-12-31
 ```
 
 ## R&D ループ
