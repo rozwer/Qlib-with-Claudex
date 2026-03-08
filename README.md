@@ -1,3 +1,5 @@
+[English](README.md) | [日本語](README_ja.md)
+
 # Qlib-with-Claudex
 
 A quantitative investment R&D framework that autonomously drives Microsoft Qlib + RD-Agent using Claude Code + Codex.

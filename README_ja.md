@@ -1,3 +1,5 @@
+[English](README.md) | [日本語](README_ja.md)
+
 # Qlib-with-Claudex
 
 Microsoft Qlib + RD-Agent を Claude Code + Codex で自律駆動する量的投資 R&D フレームワーク。
