@@ -13,6 +13,9 @@ RD-Agent-with-Claudex/
 .claude/hooks.json
 .claude/hooks/
 
+# Documents (local design docs, not distributed)
+docs/
+
 # OS
 .DS_Store
 
