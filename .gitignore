@@ -16,6 +16,9 @@ RD-Agent-with-Claudex/
 # Documents (local design docs, not distributed)
 docs/
 
+# Project plan (local tracking)
+Plans.md
+
 # OS
 .DS_Store
 
